@@ -3,15 +3,14 @@ package com.vsn.utilslibrary.utility
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.AlertDialog
-import android.app.Dialog
-import android.app.ProgressDialog
+import android.app.*
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
@@ -20,6 +19,7 @@ import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES
+import android.os.Environment
 import android.os.Handler
 import android.os.Message
 import android.provider.MediaStore
@@ -56,6 +56,11 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.regex.Pattern
+import android.graphics.drawable.BitmapDrawable
+
+import android.graphics.drawable.Drawable
+import android.provider.AlarmClock
+import java.lang.NullPointerException
 
 
 class Utils {
@@ -3283,7 +3288,7 @@ class Utils {
             private val emailPattern: Pattern = Pattern.compile("[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" + "\\@" + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" + "(" + "\\." + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" + ")+")
 
             // CHECK INTERNET CONNECTION =========================================================================================================================
-            fun checkInternet(context: Context): Boolean {
+            fun isInternetAvailable(context: Context): Boolean {
                 val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
                 val activeNetwork = cm.activeNetworkInfo
                 return if (null != activeNetwork) {
@@ -3566,6 +3571,24 @@ class Utils {
                 return BitmapFactory.decodeFile(filePath, options)
             }
 
+            // DRAWABLE TO BITMAP
+            fun drawableToBitmap(drawable: Drawable?): Bitmap? {
+                if (drawable == null) {
+                    throw NullPointerException("Drawable to convert should NOT be null")
+                }
+                if (drawable is BitmapDrawable) {
+                    return drawable.bitmap
+                }
+                if (drawable.intrinsicWidth <= 0 && drawable.intrinsicHeight <= 0) {
+                    return null
+                }
+                val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                return bitmap
+            }
+
             // PATH TO BITMAP 2
             fun getPathToBitmapConverted2(context: Context, filePath: Uri): Bitmap {
                 return MediaStore.Images.Media.getBitmap(context.contentResolver, filePath)
@@ -3679,55 +3702,87 @@ class Utils {
 
 
             // DEVICE DETAILS ======================================================================
-            fun getDeviceType() : String {
-                return Build.TYPE.toString()
-            }
+            fun getDeviceType() = Build.TYPE.toString()
 
-            fun getDeviceBrand() : String {
-                return Build.BRAND.toString()
-            }
+            fun getDeviceBrand()= Build.BRAND.toString()
 
-            fun getDeviceBoard() : String {
-                return Build.BOARD.toString()
-            }
+            fun getDeviceBoard() = Build.BOARD.toString()
 
-            fun getDeviceBootloader() : String {
-                return Build.BOOTLOADER.toString()
-            }
+            fun getDeviceBootloader() = Build.BOOTLOADER.toString()
 
-            fun getDeviceId() : String {
-                return Build.ID.toString()
-            }
+            fun getDeviceId() = Build.ID.toString()
 
-            fun getDeviceManufacture() : String {
-                return Build.MANUFACTURER.toString()
-            }
+            fun getDeviceManufacture() = Build.MANUFACTURER.toString()
 
-            fun getDeviceModel() : String {
-                return Build.MODEL.toString()
-            }
+            fun getDeviceModel() = Build.MODEL.toString()
 
-            fun getDeviceProduct() : String {
-                return Build.PRODUCT.toString()
-            }
+            fun getDeviceProduct() = Build.PRODUCT.toString()
 
             @SuppressLint("HardwareIds")
-            fun getDeviceSerialNo() : String {
-                return Build.SERIAL.toString()
+            fun getDeviceSerialNo() = Build.SERIAL.toString()
+
+            fun getDeviceVersion() = Build.VERSION.RELEASE
+
+            fun getDeviceVersionName() = VERSION_CODES::class.java.fields[Build.VERSION.SDK_INT].name
+
+            @SuppressLint("HardwareIds")
+            fun getAndroidUniqueId(context : Context) = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID).toString()
+
+
+            // CHECK SD CARD MOUNTED OR NOT
+            fun isSDCardMounted() = Environment.getExternalStorageState()!=null && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)
+
+            // DENSITY MULTIPLIER
+            fun getDensityMultiplier(context : Context) = context.resources.displayMetrics.density
+
+            // PIXEL TO DENSITY INDEPENDENT PIXEL (PX TO DIP)
+            fun getDipFromPX(pixel : Int, context: Context) = (pixel*context.resources.displayMetrics.density+0.5F).toInt()
+
+            // CHECK SERVICE RUNNING OR NOT
+            fun isServiceRunning(context: Context,serviceName : String) : Boolean {
+                val manager = context.applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+                    if (service.service.className == serviceName) {
+                        return true
+                    }
+                }
+                return false
             }
 
-            fun getDeviceVersion() : String {
-                return Build.VERSION.RELEASE
+            // INTENT USESE ==============================================================================================================================
+
+            // DIAL A CALL USING INTENT
+            fun dial(context: Context, number : String) {
+                context.startActivity(Intent(Intent.ACTION_DIAL).setData(Uri.parse("tel:$number")))
             }
 
-            fun getDeviceVersionName() : String {
-                return VERSION_CODES::class.java.fields[Build.VERSION.SDK_INT].name
+            // CALL USING INTENT
+            fun call(context: Context, number : String) {
+                context.startActivity(Intent(Intent.ACTION_CALL).setData(Uri.parse("tel:$number")))
             }
 
-            fun getAndroidUniqueId(context : Context) : String {
-                return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID).toString()
+            // SEND MSG USING INTENT
+            fun sendMessage(context: Context, number: String, message : String) {
+                val smsIntent = Intent(Intent.ACTION_SEND)
+                smsIntent.putExtra("smsto:",Uri.parse(number))
+                smsIntent.putExtra("sms_body",message)
+                smsIntent.type = "vnd.android-dir/mms-sms"
+                context.startActivity(smsIntent)
             }
 
+            // VIEW WEB PAGE USING INTENT
+            fun getWebView(context: Context, url : String) {
+                context.startActivity(Intent(Intent.ACTION_VIEW).setData(Uri.parse(url)))
+            }
+
+            fun sendMail(context: Context, to :String, subject: String, message: String, title: String) {
+                val sendEmail = Intent(Intent.ACTION_SEND)
+                sendEmail.putExtra(Intent.EXTRA_EMAIL, arrayOf(to))
+                sendEmail.putExtra(Intent.EXTRA_SUBJECT, subject)
+                sendEmail.putExtra(Intent.EXTRA_TEXT, message)
+                sendEmail.setType("message/rfc822")
+                context.startActivity(Intent.createChooser(sendEmail,title))
+            }
 
 
         }
