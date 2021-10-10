@@ -1,0 +1,3 @@
+include ':UtilsLib'
+include ':app'
+rootProject.name = "UtilsPack"
