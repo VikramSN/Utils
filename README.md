@@ -3,7 +3,7 @@ It's a utility package, which helps to use many utility features in android, suc
 
 Step 1. Add it in your root build.gradle at the end of repositories:
 
-allprojects {
+	allprojects {
 		repositories {
 			...
 			maven { url 'https://jitpack.io' }
