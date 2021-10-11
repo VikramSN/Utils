@@ -18,6 +18,7 @@ class MainActivity : AppCompatActivity() {
 //            Utils.call(this,"9876543210")
 //            Utils.sendMessage(this,"9876543210","Hello World")
 //            Utils.sendMail(this,"xyz@gmail.com,abc@gmail.com,def@gmail.com","HW","Hello World","Select Mail App")
+            Utils.hideActionBar(this)
         }
 
     }

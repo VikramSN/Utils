@@ -8,10 +8,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
+import android.graphics.*
 import android.location.Address
 import android.location.Geocoder
 import android.location.LocationManager
@@ -34,10 +31,6 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Base64
 import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.Window
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.core.app.ActivityCompat
@@ -57,9 +50,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.regex.Pattern
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
 
 import android.graphics.drawable.Drawable
 import android.provider.AlarmClock
+import android.telephony.PhoneNumberUtils
+import android.text.TextUtils
+import android.view.*
+import com.google.android.gms.tasks.Task
 import java.lang.NullPointerException
 
 
@@ -3620,10 +3618,7 @@ class Utils {
                 val hideKey = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 editText.inputType = InputType.TYPE_NULL
                 editText.requestFocus()
-                hideKey.hideSoftInputFromWindow(
-                    editText.windowToken,
-                    InputMethodManager.HIDE_IMPLICIT_ONLY
-                )
+                hideKey.hideSoftInputFromWindow(editText.windowToken, InputMethodManager.HIDE_IMPLICIT_ONLY)
             }
 
             // PARTIAL TEXT BOLD AT START
@@ -3775,6 +3770,7 @@ class Utils {
                 context.startActivity(Intent(Intent.ACTION_VIEW).setData(Uri.parse(url)))
             }
 
+            // SEND MAIL USING INTENT
             fun sendMail(context: Context, to :String, subject: String, message: String, title: String) {
                 val sendEmail = Intent(Intent.ACTION_SEND)
                 sendEmail.putExtra(Intent.EXTRA_EMAIL, arrayOf(to))
@@ -3783,6 +3779,62 @@ class Utils {
                 sendEmail.setType("message/rfc822")
                 context.startActivity(Intent.createChooser(sendEmail,title))
             }
+
+            // HIDE ACTIONBAR
+            fun hideActionBar(context : Context) {
+                (context as Activity).window?.requestFeature(Window.FEATURE_ACTION_BAR)
+                context.actionBar?.hide()
+            }
+
+            // SHOW FULL SCREEN ACTIVITY
+            fun getFullScreen(context: Context) {
+                (context as Activity).window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            }
+
+            //  GET ACITVITY SCREEN SIZE
+            fun getScreenSize(context: Context) : IntArray {
+                val size = Point()
+                val wm = (context as Activity).windowManager
+                wm.defaultDisplay.getSize(size)
+                return intArrayOf(size.x, size.y)
+            }
+
+            // CLEAR WINDOW BACKGROUND
+            fun clearWindowBackground(context: Context) = (context as Activity).window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+            // GLOBAL PHONE NUMBER VALIDATION
+            fun isGlobalPhoneNumber(phoneNumber : String) = !TextUtils.isEmpty(phoneNumber) && PhoneNumberUtils.isGlobalPhoneNumber(phoneNumber)
+
+            // INDIAN PHONE NUMEBR VALIDATION
+            fun isIndianPhoneNumber(phoneNumber: String) : Boolean {
+                var result:Boolean = isGlobalPhoneNumber(phoneNumber)
+                if (result) {
+                    result = if (phoneNumber.length > 10) {
+                        phoneNumber.length == 11 && phoneNumber.startsWith("0")
+                                || phoneNumber.length == 13 && phoneNumber.startsWith("+91")
+                                || phoneNumber.length == 13 && phoneNumber.startsWith("091")
+                                || phoneNumber.length == 14 && phoneNumber.startsWith("0091")
+                    } else {
+                        phoneNumber.length == 10 && !phoneNumber.startsWith("0")
+                    }
+                }
+                return result
+            }
+
+            // APP IN FOREGROUND
+            fun isAppInForeground(context: Context) : Boolean {
+              val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                val appProcesses = activityManager.runningAppProcesses as List<ActivityManager.RunningAppProcessInfo> ?: return false
+                val packageName = context.packageName
+                for(appProcess in appProcesses) {
+                    if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND && appProcess.processName.equals(packageName)) {
+                        return true
+                    }
+                }
+                return false
+            }
+
+
 
 
         }
