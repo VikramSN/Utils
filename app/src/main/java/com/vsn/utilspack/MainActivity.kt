@@ -1,16 +1,17 @@
 package com.vsn.utilspack
 
 import android.os.Bundle
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.vsn.utilslibrary.AppNavigator
 import com.vsn.utilslibrary.Utils
-import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val demoButton:Button = findViewById(R.id.demoButton)
 
         demoButton.setOnClickListener {
                 Utils.dial(this,"9876543210")
